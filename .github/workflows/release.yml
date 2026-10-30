@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  push:
+    tags: ["core-v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          coverage: none
+          tools: composer:v2
+      - run: composer install --no-interaction --no-progress --prefer-dist
+      - run: vendor/bin/phpunit
+      - name: Build zip
+        run: |
+          VERSION="${GITHUB_REF_NAME#core-v}"
+          rm -rf build && mkdir -p build/moduly
+          cp -r src composer.json LICENSE README.md build/moduly/
+          (cd build/moduly && composer install --no-dev --optimize-autoloader --classmap-authoritative --no-interaction)
+          export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
+          find build/moduly -exec touch -d "@${SOURCE_DATE_EPOCH}" {} +
+          (cd build && find moduly -type f | LC_ALL=C sort | zip -X -q "moduly-core-${VERSION}.zip" -@)
+          (cd build && sha256sum "moduly-core-${VERSION}.zip" > SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: moduly-core
+          path: |
+            build/*.zip
+            build/SHA256SUMS
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/*.zip
+            build/SHA256SUMS

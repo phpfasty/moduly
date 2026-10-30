@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<ruleset name="ModulY">
+    <description>PSR-12 for ModulY core.</description>
+    <file>src</file>
+    <file>tests</file>
+    <arg name="extensions" value="php"/>
+    <arg name="colors"/>
+    <arg value="sp"/>
+    <rule ref="PSR12">
+        <exclude name="Generic.Files.LineLength"/>
+    </rule>
+</ruleset>
