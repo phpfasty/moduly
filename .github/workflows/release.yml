@@ -23,7 +23,7 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME#core-v}"
           rm -rf build && mkdir -p build/moduly
-          cp -r src composer.json LICENSE README.md build/moduly/
+          cp -r src schema bin composer.json LICENSE README.md build/moduly/
           (cd build/moduly && composer install --no-dev --optimize-autoloader --classmap-authoritative --no-interaction)
           export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
           find build/moduly -exec touch -d "@${SOURCE_DATE_EPOCH}" {} +

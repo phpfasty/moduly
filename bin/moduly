@@ -1,0 +1,67 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * Publisher CLI (never runs on a site):
+ *   moduly keygen                       → prints a new ed25519 keypair as JSON (store the secret in a secret manager)
+ *   moduly sign <module-dir>            → writes SIGNATURE; secret key from env MODULY_SIGNING_KEY (unset = alg "none")
+ *   moduly pack <module-dir> <out.zip>  → reproducible zip
+ *   moduly verify <zip> <publisher> <base64-pubkey>
+ */
+
+declare(strict_types=1);
+
+use PhpFasty\Moduly\Manifest\DependencyResolver;
+use PhpFasty\Moduly\Moduly;
+use PhpFasty\Moduly\Package\Installer;
+use PhpFasty\Moduly\Package\Packer;
+use PhpFasty\Moduly\Signature\Keyring;
+use PhpFasty\Moduly\Signature\Signer;
+use PhpFasty\Moduly\Signature\Verifier;
+
+foreach ([__DIR__ . '/../vendor/autoload.php', __DIR__ . '/../../../autoload.php'] as $autoload) {
+    if (is_file($autoload)) {
+        require $autoload;
+        break;
+    }
+}
+
+$cmd = $argv[1] ?? '';
+try {
+    switch ($cmd) {
+        case 'keygen':
+            $kp = sodium_crypto_sign_keypair();
+            echo json_encode([
+                'public' => base64_encode(sodium_crypto_sign_publickey($kp)),
+                'secret' => base64_encode(sodium_crypto_sign_secretkey($kp)),
+            ], JSON_PRETTY_PRINT), "\n";
+            break;
+        case 'sign':
+            $key = getenv('MODULY_SIGNING_KEY');
+            $sig = Signer::sign(rtrim($argv[2] ?? '', '/'), $key === false || $key === '' ? null : $key);
+            fwrite(STDERR, sprintf("Signed (%s) %d files, key %s\n", $sig->alg, count($sig->files), $sig->key));
+            break;
+        case 'pack':
+            Packer::pack(rtrim($argv[2] ?? '', '/'), $argv[3] ?? '');
+            fwrite(STDERR, 'Packed ' . ($argv[3] ?? '') . ' sha256 ' . hash_file('sha256', $argv[3] ?? '') . "\n");
+            break;
+        case 'verify':
+            $tmp = sys_get_temp_dir() . '/moduly-verify-' . bin2hex(random_bytes(4));
+            $installer = new Installer(
+                $tmp . '/modules',
+                $tmp . '/q',
+                new Verifier(new Keyring([$argv[3] ?? '' => [$argv[4] ?? '']])),
+                new DependencyResolver(Moduly::VERSION, PHP_VERSION, ['wp' => '99.0.0']),
+            );
+            $r = $installer->install($argv[2] ?? '');
+            fwrite(STDERR, sprintf("OK %s %s signed=%s\n", $r->manifest->id, (string) $r->manifest->version, $r->signed ? 'yes' : 'no'));
+            \PhpFasty\Moduly\Package\Fs::remove($tmp);
+            break;
+        default:
+            fwrite(STDERR, "usage: moduly keygen | sign <dir> | pack <dir> <out.zip> | verify <zip> <publisher> <pubkey>\n");
+            exit(2);
+    }
+} catch (Throwable $e) {
+    fwrite(STDERR, 'Error: ' . $e->getMessage() . "\n");
+    exit(1);
+}
