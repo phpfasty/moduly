@@ -10,7 +10,7 @@
 
 ### 1. Разделение
 - `phpfasty/moduly` (этот репозиторий) — **только CMS-агностичное ядро PHP**: манифест, валидация, подпись, lifecycle, DI, контракты миграций и хранилища. Никаких вызовов WordPress в `src/` (архитектурный тест `tests/Architecture`).
-- `phpfasty/wpmodules` — отдельный монорепо: WordPress-плагин, который ставит ядро через Composer и содержит модули (`types`, `cart`, `orders`, …). Всё WP-специфичное (options, post meta, WP-CLI, Action Scheduler, хуки) — там.
+- `phpfasty/wpmodules` — отдельный монорепо: WordPress-плагин **ModulY** (`Plugin Name: ModulY`, `Author: PHP FastY`; имя репо ≠ имя плагина), который ставит ядро через Composer и содержит модули (`types`, `cart`, `orders`, …). Всё WP-специфичное (options, post meta, WP-CLI, Action Scheduler, хуки) — там.
 - Пакет для wordpress.org готовится позже, но код с самого начала соответствует требованиям каталога (GPL-совместимая лицензия, без загрузки исполняемого кода со сторонних серверов).
 
 ### 2. Миграции: только вперёд, идемпотентно

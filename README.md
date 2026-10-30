@@ -1,7 +1,7 @@
 # ModulY
 
 CMS-agnostic ядро-загрузчик модулей на PHP (≥ 8.2): манифест, валидация, подпись, жизненный цикл, DI, миграции.
-Адаптер для WordPress (плагин с набором модулей) живёт отдельно: [phpfasty/wpmodules](https://github.com/phpfasty/wpmodules).
+WordPress-плагин **ModulY** (Plugin Name: ModulY, Author: PHP FastY) с набором модулей живёт в отдельном монорепо [phpfasty/wpmodules](https://github.com/phpfasty/wpmodules) и ставит это ядро через Composer.
 
 ## Разработка
 
