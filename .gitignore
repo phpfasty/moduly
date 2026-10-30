@@ -2,3 +2,4 @@
 /build/
 /.phpunit.cache/
 composer.lock
+.phpunit.result.cache
