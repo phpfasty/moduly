@@ -41,6 +41,29 @@ final class ManifestTest extends TestCase
         self::assertSame(1, $m->hooks[0]['args']);
     }
 
+    public function testEndpointsAreDeclaredForTheDisableScenario(): void
+    {
+        $data = self::valid();
+        $data['endpoints'] = ['actions' => ['latte_shop_cart', 'latte_shop_cart'], 'rest' => ['cart/v1']];
+        $m = (new ManifestValidator())->fromArray($data, 'cart');
+        $this->assertSame(['actions' => ['latte_shop_cart'], 'rest' => ['cart/v1']], $m->endpoints);
+        $this->assertSame(['actions' => [], 'rest' => []], (new ManifestValidator())->fromArray(self::valid(), 'cart')->endpoints);
+    }
+
+    public function testInvalidEndpointsAreRejected(): void
+    {
+        foreach ([['forms' => ['x']], ['actions' => ['Bad Name']], ['actions' => 'x'], ['a']] as $bad) {
+            $data = self::valid();
+            $data['endpoints'] = $bad;
+            try {
+                (new ManifestValidator())->fromArray($data, 'cart');
+                $this->fail('accepted ' . json_encode($bad));
+            } catch (\PhpFasty\Moduly\Exception\ManifestException $e) {
+                $this->assertStringContainsString('endpoints', $e->getMessage());
+            }
+        }
+    }
+
     public function testShippedSchemaFileIsValidJson(): void
     {
         $schema = json_decode((string) file_get_contents(dirname(__DIR__, 2) . '/schema/module-1.json'), true);
